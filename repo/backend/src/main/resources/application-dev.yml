@@ -1,0 +1,26 @@
+# Development profile overrides
+# Disables SSL for local development without certificates.
+# Server port is NOT overridden here — it is controlled via the SERVER_PORT
+# environment variable (default 8443) so Docker Compose port mappings remain
+# consistent. Setting an explicit port in this file would shadow SERVER_PORT
+# and break the 8443:8443 container mapping.
+
+server:
+  ssl:
+    enabled: false
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+logging:
+  level:
+    com.eventops: DEBUG
+    org.hibernate.SQL: DEBUG
+
+eventops:
+  security:
+    signature:
+      enabled: false

@@ -1,0 +1,55 @@
+{
+  "projectType": "full-stack",
+  "projectName": "Compliance-Grade Event Operations and Accounting Platform",
+  "description": "Offline facility-network platform for internal trainings, certification sessions, and community events with compliance-grade accounting and audit controls",
+  "stack": {
+    "frontend": {
+      "framework": "Vue.js 3.5",
+      "language": "JavaScript",
+      "router": "Vue Router 4.5",
+      "stateManagement": "Pinia 3.0",
+      "buildTool": "Vite 6.3",
+      "testRunner": "Vitest 4.1",
+      "httpClient": "axios 1.15",
+      "offlineStorage": "localforage 1.10"
+    },
+    "backend": {
+      "framework": "Spring Boot 3.2",
+      "language": "Java 17 LTS",
+      "security": "Spring Security",
+      "validation": "Spring Validation",
+      "orm": "Spring Data JPA / Hibernate",
+      "migrations": "Flyway",
+      "testRunner": "JUnit 5 / Spring Boot Test"
+    },
+    "database": {
+      "engine": "MySQL 8.x",
+      "encryptionAtRest": "AES-256 field-level"
+    },
+    "containerization": {
+      "tool": "Docker Compose",
+      "services": ["frontend", "backend", "mysql"]
+    }
+  },
+  "deployment": {
+    "model": "offline-facility-network",
+    "externalDependencies": "none",
+    "protocol": "HTTPS with request-signature verification"
+  },
+  "repositoryStructure": {
+    "docs": "docs/",
+    "source": "repo/",
+    "frontend": "repo/frontend/",
+    "backend": "repo/backend/",
+    "frontendTests": "repo/frontend/unit_tests/",
+    "backendUnitTests": "repo/backend/unit_tests/",
+    "backendApiTests": "repo/backend/api_tests/",
+    "databaseMigrations": "repo/backend/database/",
+    "testOrchestrator": "repo/run_tests.sh"
+  },
+  "status": {
+    "currentPhase": "Prompt 1 — Architecture framing and repo contract",
+    "dockerExecuted": false,
+    "testsExecuted": false
+  }
+}

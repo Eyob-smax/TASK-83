@@ -1,0 +1,6 @@
+services:
+  backend:
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SSL_ENABLED: false
+      ENCRYPTION_SECRET_KEY: ${ENCRYPTION_SECRET_KEY:-dev-local-encryption-key-change-before-sharing}
