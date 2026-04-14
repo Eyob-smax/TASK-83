@@ -1,7 +1,12 @@
 package com.eventops;
 
+import com.eventops.domain.user.AccountStatus;
 import com.eventops.domain.user.RoleType;
+import com.eventops.domain.user.User;
+import com.eventops.repository.user.UserRepository;
 import com.eventops.security.auth.AuthController;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -43,6 +48,26 @@ class SignatureFlowIT {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @BeforeEach
+    void seedTestUser() {
+        User user = new User();
+        user.setId("user-1");
+        user.setUsername("user");
+        user.setDisplayName("user");
+        user.setPasswordHash("password-hash");
+        user.setRoleType(RoleType.ATTENDEE);
+        user.setStatus(AccountStatus.ACTIVE);
+        userRepository.save(user);
+    }
+
+    @AfterEach
+    void cleanUp() {
+        userRepository.deleteAll();
+    }
 
     // ---------------------------------------------------------------
     // Happy path

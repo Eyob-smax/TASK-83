@@ -37,8 +37,8 @@ class EnumValidationTest {
     }
 
     @Test
-    void checkInStatus_hasSevenOutcomes() {
-        assertEquals(7, CheckInStatus.values().length);
+    void checkInStatus_hasEightOutcomes() {
+        assertEquals(8, CheckInStatus.values().length);
     }
 
     @Test
