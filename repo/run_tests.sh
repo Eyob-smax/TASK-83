@@ -93,26 +93,26 @@ run_backend_unit_tests() {
   cd "$SCRIPT_DIR"
 }
 
-# run_backend_api_tests() {
-#   echo -e "${YELLOW}=== Backend API/Integration Tests (JUnit 5 / Failsafe) ===${NC}"
-#   echo "  Source: $BACKEND_DIR/api_tests/"
-#   echo "  Config: $BACKEND_DIR/pom.xml (maven-failsafe-plugin)"
-#   echo "  Note: Uses application-test profile (H2 in-memory) by default"
-#   echo ""
+run_backend_api_tests() {
+  echo -e "${YELLOW}=== Backend API/Integration Tests (JUnit 5 / Failsafe) ===${NC}"
+  echo "  Source: $BACKEND_DIR/api_tests/"
+  echo "  Config: $BACKEND_DIR/pom.xml (maven-failsafe-plugin)"
+  echo "  Note: Uses application-test profile (H2 in-memory) by default"
+  echo ""
 
-#   if [ ! -f "$BACKEND_DIR/pom.xml" ]; then
-#     echo -e "${RED}Backend pom.xml not found at $BACKEND_DIR${NC}"
-#     BACKEND_API_RESULT="failed"
-#     EXIT_CODE=1
-#     return
-#   fi
+  if [ ! -f "$BACKEND_DIR/pom.xml" ]; then
+    echo -e "${RED}Backend pom.xml not found at $BACKEND_DIR${NC}"
+    BACKEND_API_RESULT="failed"
+    EXIT_CODE=1
+    return
+  fi
 
-#   cd "$BACKEND_DIR"
-#   # Execute failsafe goals directly so API tests run without surefire unit-test selection drift.
-#   mvn failsafe:integration-test failsafe:verify -pl . -Dit.test="*IT,*IntegrationTest" -DfailIfNoTests=false 2>&1 \
-#     && BACKEND_API_RESULT="passed" || { BACKEND_API_RESULT="failed"; EXIT_CODE=1; }
-#   cd "$SCRIPT_DIR"
-# }
+  cd "$BACKEND_DIR"
+  # Execute failsafe goals directly so API tests run without surefire unit-test selection drift.
+  mvn failsafe:integration-test failsafe:verify -pl . -Dit.test="*IT,*IntegrationTest" -DfailIfNoTests=false 2>&1 \
+    && BACKEND_API_RESULT="passed" || { BACKEND_API_RESULT="failed"; EXIT_CODE=1; }
+  cd "$SCRIPT_DIR"
+}
 
 print_summary() {
   echo ""
@@ -143,18 +143,18 @@ case "$SUITE" in
     ;;
   backend)
     run_backend_unit_tests
-    # run_backend_api_tests
+    run_backend_api_tests
     ;;
   backend-unit)
     run_backend_unit_tests
     ;;
   backend-api)
-    # run_backend_api_tests
+    run_backend_api_tests
     ;;
   all|--coverage)
     run_frontend_tests
     run_backend_unit_tests
-    # run_backend_api_tests
+    run_backend_api_tests
     ;;
   *)
     echo "Usage: $0 {all|frontend|backend|backend-unit|backend-api} [--coverage]"
