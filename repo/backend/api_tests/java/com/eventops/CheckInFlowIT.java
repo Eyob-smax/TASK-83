@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.Instant;
 import java.time.LocalDateTime;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -83,6 +84,29 @@ class CheckInFlowIT {
     }
 
     @Test
+    void checkIn_ineligibleStatus_returns422() throws Exception {
+        EventSession session = createSession("ineligible-session", LocalDateTime.now().plusMinutes(5));
+        eventSessionRepository.save(session);
+
+        Registration registration = new Registration();
+        registration.setUserId("attendee-1");
+        registration.setSessionId(session.getId());
+        registration.setStatus(RegistrationStatus.WAITLISTED);
+        registrationRepository.save(registration);
+
+        seedPasscode(session.getId(), "222222");
+
+        mockMvc.perform(post("/api/checkin/sessions/" + session.getId())
+                        .with(csrf())
+                        .with(TestSecurity.user("staff-1", "staff", RoleType.EVENT_STAFF))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"userId\":\"attendee-1\",\"passcode\":\"222222\"}"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.errors[0].code").value("INELIGIBLE_STATUS"));
+    }
+
+    @Test
     void checkIn_windowClosed_returns422ForStaff() throws Exception {
         EventSession session = createSession("window-closed-session", LocalDateTime.now().plusHours(3));
         eventSessionRepository.save(session);
@@ -96,6 +120,7 @@ class CheckInFlowIT {
         seedPasscode(session.getId(), "111111");
 
         mockMvc.perform(post("/api/checkin/sessions/" + session.getId())
+                        .with(csrf())
                         .with(TestSecurity.user("staff-1", "staff", RoleType.EVENT_STAFF))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"userId\":\"attendee-1\",\"passcode\":\"111111\"}"))

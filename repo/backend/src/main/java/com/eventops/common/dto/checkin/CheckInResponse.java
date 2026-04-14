@@ -9,6 +9,9 @@ public class CheckInResponse {
     private String status;
     private Instant checkedInAt;
     private String message;
+    private String conflictType;
+    private Instant detectedAt;
+    private String deviceToken;
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
@@ -22,4 +25,10 @@ public class CheckInResponse {
     public void setCheckedInAt(Instant checkedInAt) { this.checkedInAt = checkedInAt; }
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }
+    public String getConflictType() { return conflictType; }
+    public void setConflictType(String conflictType) { this.conflictType = conflictType; }
+    public Instant getDetectedAt() { return detectedAt; }
+    public void setDetectedAt(Instant detectedAt) { this.detectedAt = detectedAt; }
+    public String getDeviceToken() { return deviceToken; }
+    public void setDeviceToken(String deviceToken) { this.deviceToken = deviceToken; }
 }

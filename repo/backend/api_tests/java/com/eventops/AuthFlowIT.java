@@ -9,6 +9,7 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -24,11 +25,13 @@ class AuthFlowIT {
     @Test
     void register_thenLogin_thenRefreshAndMe_succeedsWithSession() throws Exception {
         mockMvc.perform(post("/api/auth/register")
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"username\":\"testuser\",\"password\":\"password123\",\"displayName\":\"Test User\"}"))
                 .andExpect(status().isCreated());
 
         MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"username\":\"testuser\",\"password\":\"password123\"}"))
                 .andExpect(status().isOk())
@@ -41,7 +44,7 @@ class AuthFlowIT {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.username").value("testuser"));
 
-        mockMvc.perform(post("/api/auth/refresh").session(session))
+        mockMvc.perform(post("/api/auth/refresh").with(csrf()).session(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.username").value("testuser"));
     }
@@ -49,6 +52,7 @@ class AuthFlowIT {
     @Test
     void login_withWrongPassword_returns401() throws Exception {
         mockMvc.perform(post("/api/auth/login")
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{\"username\":\"nobody\",\"password\":\"wrongpass123\"}"))
                 .andExpect(status().isUnauthorized());
@@ -57,6 +61,7 @@ class AuthFlowIT {
     @Test
     void login_withEmptyBody_returns400() throws Exception {
         mockMvc.perform(post("/api/auth/login")
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}"))
                 .andExpect(status().isBadRequest());
@@ -70,7 +75,7 @@ class AuthFlowIT {
 
     @Test
     void refresh_withoutAuth_returns401() throws Exception {
-        mockMvc.perform(post("/api/auth/refresh"))
+        mockMvc.perform(post("/api/auth/refresh").with(csrf()))
                 .andExpect(status().isUnauthorized());
     }
 }

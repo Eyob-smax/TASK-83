@@ -10,6 +10,8 @@ import com.eventops.domain.checkin.CheckInStatus;
 import com.eventops.domain.checkin.DeviceBinding;
 import com.eventops.domain.event.EventSession;
 import com.eventops.domain.notification.NotificationType;
+import com.eventops.domain.registration.Registration;
+import com.eventops.domain.registration.RegistrationStatus;
 import com.eventops.repository.checkin.CheckInRecordRepository;
 import com.eventops.repository.checkin.DeviceBindingRepository;
 import com.eventops.repository.event.EventSessionRepository;
@@ -26,6 +28,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.List;
@@ -40,6 +43,8 @@ public class CheckInService {
 
     private static final Logger log = LoggerFactory.getLogger(CheckInService.class);
         private static final long CONCURRENT_DEVICE_WINDOW_SECONDS = 300;
+    private static final EnumSet<RegistrationStatus> ELIGIBLE_STATUSES =
+            EnumSet.of(RegistrationStatus.CONFIRMED, RegistrationStatus.PROMOTED);
 
     private final CheckInRecordRepository checkInRecordRepository;
     private final DeviceBindingRepository deviceBindingRepository;
@@ -103,9 +108,9 @@ public class CheckInService {
             throw new BusinessException("Invalid passcode", 422, "INVALID_PASSCODE");
         }
 
-        // Step 3: Check user is registered
-        boolean isRegistered = registrationRepository.existsByUserIdAndSessionId(userId, sessionId);
-        if (!isRegistered) {
+        // Step 3: Check user is registered and in an eligible status
+        Optional<Registration> registrationOpt = registrationRepository.findByUserIdAndSessionId(userId, sessionId);
+        if (registrationOpt.isEmpty()) {
             CheckInRecord denied = createRecord(sessionId, userId, staffId,
                     CheckInStatus.DENIED_NOT_REGISTERED, passcode, null, null);
             checkInRecordRepository.save(denied);
@@ -113,6 +118,17 @@ public class CheckInService {
                     "CheckIn", denied.getId(), "Check-in denied: not registered");
             throw new BusinessException("Attendee is not registered for this session",
                     422, "NOT_REGISTERED");
+        }
+        Registration registration = registrationOpt.get();
+        if (!ELIGIBLE_STATUSES.contains(registration.getStatus())) {
+            CheckInRecord denied = createRecord(sessionId, userId, staffId,
+                    CheckInStatus.DENIED_INELIGIBLE_STATUS, passcode, null, null);
+            checkInRecordRepository.save(denied);
+            auditService.logForCurrentUser(AuditActionType.CHECKIN_DENIED,
+                    "CheckIn", denied.getId(),
+                    "Check-in denied: registration status ineligible (" + registration.getStatus() + ")");
+            throw new BusinessException("Registration is not in an eligible status for check-in",
+                    422, "INELIGIBLE_STATUS");
         }
 
         // Step 4: Check duplicate check-in
@@ -262,7 +278,20 @@ public class CheckInService {
         response.setStatus(record.getStatus().name());
         response.setCheckedInAt(record.getCheckedInAt());
         response.setMessage(message);
+        response.setConflictType(deriveConflictType(record.getStatus()));
+        response.setDetectedAt(record.getCheckedInAt());
+        response.setDeviceToken(record.getDeviceTokenHash());
         return response;
+    }
+
+    private String deriveConflictType(CheckInStatus status) {
+        if (status == null) return null;
+        return switch (status) {
+            case DENIED_DEVICE_CONFLICT -> "DEVICE_CONFLICT";
+            case CONFLICT_MULTI_DEVICE -> "CONCURRENT_DEVICE";
+            case DENIED_DUPLICATE -> "DUPLICATE_CHECKIN";
+            default -> null;
+        };
     }
 
     private String hashDeviceToken(String deviceToken) {

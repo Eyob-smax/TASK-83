@@ -8,6 +8,8 @@ import com.eventops.domain.checkin.DeviceBinding;
 import com.eventops.domain.checkin.PasscodeState;
 import com.eventops.domain.event.EventSession;
 import com.eventops.domain.event.SessionStatus;
+import com.eventops.domain.registration.Registration;
+import com.eventops.domain.registration.RegistrationStatus;
 import com.eventops.domain.notification.NotificationType;
 import com.eventops.repository.checkin.CheckInRecordRepository;
 import com.eventops.repository.checkin.DeviceBindingRepository;
@@ -75,7 +77,7 @@ class CheckInServiceTest {
 
         when(eventSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
         when(passcodeService.validatePasscode(SESSION_ID, PASSCODE)).thenReturn(true);
-        when(registrationRepository.existsByUserIdAndSessionId(USER_ID, SESSION_ID)).thenReturn(true);
+        when(registrationRepository.findByUserIdAndSessionId(USER_ID, SESSION_ID)).thenReturn(Optional.of(buildRegistration(RegistrationStatus.CONFIRMED)));
         when(checkInRecordRepository.existsBySessionIdAndUserIdAndStatus(
                 SESSION_ID, USER_ID, CheckInStatus.CHECKED_IN)).thenReturn(false);
         when(checkInRecordRepository.save(any(CheckInRecord.class)))
@@ -157,7 +159,7 @@ class CheckInServiceTest {
 
         when(eventSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
         when(passcodeService.validatePasscode(SESSION_ID, PASSCODE)).thenReturn(true);
-        when(registrationRepository.existsByUserIdAndSessionId(USER_ID, SESSION_ID)).thenReturn(false);
+        when(registrationRepository.findByUserIdAndSessionId(USER_ID, SESSION_ID)).thenReturn(Optional.empty());
         when(checkInRecordRepository.save(any(CheckInRecord.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -173,7 +175,7 @@ class CheckInServiceTest {
 
         when(eventSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
         when(passcodeService.validatePasscode(SESSION_ID, PASSCODE)).thenReturn(true);
-        when(registrationRepository.existsByUserIdAndSessionId(USER_ID, SESSION_ID)).thenReturn(true);
+        when(registrationRepository.findByUserIdAndSessionId(USER_ID, SESSION_ID)).thenReturn(Optional.of(buildRegistration(RegistrationStatus.CONFIRMED)));
         when(checkInRecordRepository.existsBySessionIdAndUserIdAndStatus(
                 SESSION_ID, USER_ID, CheckInStatus.CHECKED_IN)).thenReturn(true);
         when(checkInRecordRepository.save(any(CheckInRecord.class)))
@@ -201,7 +203,7 @@ class CheckInServiceTest {
 
         when(eventSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
         when(passcodeService.validatePasscode(SESSION_ID, PASSCODE)).thenReturn(true);
-        when(registrationRepository.existsByUserIdAndSessionId(USER_ID, SESSION_ID)).thenReturn(true);
+        when(registrationRepository.findByUserIdAndSessionId(USER_ID, SESSION_ID)).thenReturn(Optional.of(buildRegistration(RegistrationStatus.CONFIRMED)));
         when(checkInRecordRepository.existsBySessionIdAndUserIdAndStatus(
                 SESSION_ID, USER_ID, CheckInStatus.CHECKED_IN)).thenReturn(false);
         when(deviceBindingRepository.findByUserIdAndBindingDate(eq(USER_ID), any(LocalDate.class)))
@@ -224,7 +226,7 @@ class CheckInServiceTest {
 
         when(eventSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
         when(passcodeService.validatePasscode(SESSION_ID, PASSCODE)).thenReturn(true);
-        when(registrationRepository.existsByUserIdAndSessionId(USER_ID, SESSION_ID)).thenReturn(true);
+        when(registrationRepository.findByUserIdAndSessionId(USER_ID, SESSION_ID)).thenReturn(Optional.of(buildRegistration(RegistrationStatus.CONFIRMED)));
         when(checkInRecordRepository.existsBySessionIdAndUserIdAndStatus(
                 SESSION_ID, USER_ID, CheckInStatus.CHECKED_IN)).thenReturn(false);
         when(deviceBindingRepository.findByUserIdAndBindingDate(eq(USER_ID), any(LocalDate.class)))
@@ -253,7 +255,7 @@ class CheckInServiceTest {
 
         when(eventSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
         when(passcodeService.validatePasscode(SESSION_ID, PASSCODE)).thenReturn(true);
-        when(registrationRepository.existsByUserIdAndSessionId(USER_ID, SESSION_ID)).thenReturn(true);
+        when(registrationRepository.findByUserIdAndSessionId(USER_ID, SESSION_ID)).thenReturn(Optional.of(buildRegistration(RegistrationStatus.CONFIRMED)));
         when(checkInRecordRepository.existsBySessionIdAndUserIdAndStatus(
                 SESSION_ID, USER_ID, CheckInStatus.CHECKED_IN)).thenReturn(false);
 
@@ -278,7 +280,7 @@ class CheckInServiceTest {
 
         when(eventSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
         when(passcodeService.validatePasscode(SESSION_ID, PASSCODE)).thenReturn(true);
-        when(registrationRepository.existsByUserIdAndSessionId(USER_ID, SESSION_ID)).thenReturn(true);
+        when(registrationRepository.findByUserIdAndSessionId(USER_ID, SESSION_ID)).thenReturn(Optional.of(buildRegistration(RegistrationStatus.CONFIRMED)));
         when(checkInRecordRepository.existsBySessionIdAndUserIdAndStatus(
                 SESSION_ID, USER_ID, CheckInStatus.CHECKED_IN)).thenReturn(false);
         when(checkInRecordRepository.findTopByUserIdAndStatusAndSessionIdNotOrderByCheckedInAtDesc(
@@ -307,7 +309,7 @@ class CheckInServiceTest {
 
         when(eventSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
         when(passcodeService.validatePasscode(SESSION_ID, PASSCODE)).thenReturn(true);
-        when(registrationRepository.existsByUserIdAndSessionId(USER_ID, SESSION_ID)).thenReturn(true);
+        when(registrationRepository.findByUserIdAndSessionId(USER_ID, SESSION_ID)).thenReturn(Optional.of(buildRegistration(RegistrationStatus.CONFIRMED)));
         when(checkInRecordRepository.existsBySessionIdAndUserIdAndStatus(
                 SESSION_ID, USER_ID, CheckInStatus.CHECKED_IN)).thenReturn(false);
         when(checkInRecordRepository.findTopByUserIdAndStatusAndSessionIdNotOrderByCheckedInAtDesc(
@@ -352,7 +354,7 @@ class CheckInServiceTest {
 
         when(eventSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
         when(passcodeService.validatePasscode(SESSION_ID, PASSCODE)).thenReturn(true);
-        when(registrationRepository.existsByUserIdAndSessionId(USER_ID, SESSION_ID)).thenReturn(true);
+        when(registrationRepository.findByUserIdAndSessionId(USER_ID, SESSION_ID)).thenReturn(Optional.of(buildRegistration(RegistrationStatus.CONFIRMED)));
         when(checkInRecordRepository.existsBySessionIdAndUserIdAndStatus(
                 SESSION_ID, USER_ID, CheckInStatus.CHECKED_IN)).thenReturn(false);
         when(checkInRecordRepository.save(any(CheckInRecord.class)))
@@ -364,8 +366,71 @@ class CheckInServiceTest {
     }
 
     // ---------------------------------------------------------------
-    // Helper
+    // Registration status eligibility
     // ---------------------------------------------------------------
+
+    @Test
+    void checkIn_denied_waitlistedRegistration() {
+        EventSession session = buildSession(SESSION_ID, LocalDateTime.now().plusMinutes(5));
+
+        when(eventSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
+        when(passcodeService.validatePasscode(SESSION_ID, PASSCODE)).thenReturn(true);
+        when(registrationRepository.findByUserIdAndSessionId(USER_ID, SESSION_ID))
+                .thenReturn(Optional.of(buildRegistration(RegistrationStatus.WAITLISTED)));
+        when(checkInRecordRepository.save(any(CheckInRecord.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> checkInService.checkIn(SESSION_ID, USER_ID, STAFF_ID, PASSCODE, DEVICE_TOKEN));
+
+        assertEquals("INELIGIBLE_STATUS", ex.getErrorCode());
+    }
+
+    @Test
+    void checkIn_denied_cancelledRegistration() {
+        EventSession session = buildSession(SESSION_ID, LocalDateTime.now().plusMinutes(5));
+
+        when(eventSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
+        when(passcodeService.validatePasscode(SESSION_ID, PASSCODE)).thenReturn(true);
+        when(registrationRepository.findByUserIdAndSessionId(USER_ID, SESSION_ID))
+                .thenReturn(Optional.of(buildRegistration(RegistrationStatus.CANCELLED)));
+        when(checkInRecordRepository.save(any(CheckInRecord.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> checkInService.checkIn(SESSION_ID, USER_ID, STAFF_ID, PASSCODE, DEVICE_TOKEN));
+
+        assertEquals("INELIGIBLE_STATUS", ex.getErrorCode());
+    }
+
+    @Test
+    void checkIn_denied_expiredRegistration() {
+        EventSession session = buildSession(SESSION_ID, LocalDateTime.now().plusMinutes(5));
+
+        when(eventSessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
+        when(passcodeService.validatePasscode(SESSION_ID, PASSCODE)).thenReturn(true);
+        when(registrationRepository.findByUserIdAndSessionId(USER_ID, SESSION_ID))
+                .thenReturn(Optional.of(buildRegistration(RegistrationStatus.EXPIRED)));
+        when(checkInRecordRepository.save(any(CheckInRecord.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> checkInService.checkIn(SESSION_ID, USER_ID, STAFF_ID, PASSCODE, DEVICE_TOKEN));
+
+        assertEquals("INELIGIBLE_STATUS", ex.getErrorCode());
+    }
+
+    // ---------------------------------------------------------------
+    // Helpers
+    // ---------------------------------------------------------------
+
+    private Registration buildRegistration(RegistrationStatus status) {
+        Registration registration = new Registration();
+        registration.setUserId(USER_ID);
+        registration.setSessionId(SESSION_ID);
+        registration.setStatus(status);
+        return registration;
+    }
 
     private EventSession buildSession(String id, LocalDateTime startTime) {
         EventSession session = new EventSession();

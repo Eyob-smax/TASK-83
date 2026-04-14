@@ -5,7 +5,7 @@
 #   docker compose up --build     # build images and start all services
 #
 # Ports (host → container):
-#   http://localhost:${FRONTEND_PORT:-443}      → nginx (port 80)
+#   https://localhost:${FRONTEND_PORT:-443}     → nginx (port 443, TLS)
 #   https://localhost:${BACKEND_PORT:-8443}     → Spring Boot (port 8443)
 #   localhost:${MYSQL_PORT:-3306}               → MySQL (port 3306)
 #
@@ -57,7 +57,7 @@ services:
       ENCRYPTION_SECRET_KEY: ${ENCRYPTION_SECRET_KEY}
       # CORS: allow the nginx frontend (same-origin proxy means this is only
       # needed for direct API access, e.g. local dev or automated test clients)
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:443,http://localhost:5173,http://localhost}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://localhost:443,http://localhost:5173,http://localhost}
       BACKUP_PATH: /var/eventops/backups
       EXPORT_PATH: /var/eventops/exports
       SHARED_FOLDER_PATH: /var/eventops/shared
@@ -80,7 +80,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "${FRONTEND_PORT:-443}:80"
+      - "${FRONTEND_PORT:-443}:443"
 
 volumes:
   mysql-data:

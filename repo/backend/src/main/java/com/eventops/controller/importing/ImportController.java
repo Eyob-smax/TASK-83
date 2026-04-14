@@ -2,11 +2,10 @@ package com.eventops.controller.importing;
 
 import com.eventops.common.dto.ApiResponse;
 import com.eventops.common.dto.PagedResponse;
+import com.eventops.common.dto.importing.CrawlJobTriggerRequest;
 import com.eventops.common.dto.importing.ImportSourceUpsertRequest;
 import com.eventops.common.dto.importing.ImportSourceResponse;
-import com.eventops.common.exception.BusinessException;
 import com.eventops.domain.importing.CrawlJob;
-import com.eventops.domain.importing.ImportMode;
 import com.eventops.service.importing.ImportService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -114,32 +113,13 @@ public class ImportController {
      * @return 201 with the created crawl job
      */
     @PostMapping("/jobs/trigger")
-    public ResponseEntity<ApiResponse<CrawlJob>> trigger(@RequestBody Map<String, Object> body) {
-        String sourceId = body.get("sourceId") != null ? body.get("sourceId").toString() : null;
-        String modeStr = body.get("mode") != null ? body.get("mode").toString() : "INCREMENTAL";
-        Integer priority = parsePriority(body.get("priority"));
-        ImportMode mode = ImportMode.valueOf(modeStr.toUpperCase());
-        log.debug("POST /api/imports/jobs/trigger – sourceId={}, mode={}, priority={}", sourceId, mode, priority);
+    public ResponseEntity<ApiResponse<CrawlJob>> trigger(@Valid @RequestBody CrawlJobTriggerRequest request) {
+        log.debug("POST /api/imports/jobs/trigger – sourceId={}, mode={}, priority={}",
+                request.getSourceId(), request.getMode(), request.getPriority());
 
-        CrawlJob job = importService.triggerCrawl(sourceId, mode, priority);
+        CrawlJob job = importService.triggerCrawl(request.getSourceId(), request.getMode(), request.getPriority());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(job, "Import job triggered"));
-    }
-
-    private Integer parsePriority(Object value) {
-        if (value == null) {
-            return null;
-        }
-
-        if (value instanceof Number number) {
-            return number.intValue();
-        }
-
-        try {
-            return Integer.valueOf(value.toString());
-        } catch (NumberFormatException ex) {
-            throw new BusinessException("priority must be a number", 422, "INVALID_PRIORITY");
-        }
     }
 
     /**

@@ -202,13 +202,12 @@ This document maps each major prompt requirement to the code modules that implem
 
 **Total: ~198 backend unit test methods**
 
-### Backend API/Integration Tests (9 files)
+### Backend API/Integration Tests (10 files)
 
-> **Note on signature coverage:** All backend API/integration tests run against the `dev` Spring profile
-> (`SIGNATURE_ENABLED=false`). Requirements for HMAC-SHA256 signature validation (REQ-SEC-04) and replay
-> prevention (REQ-SEC-05) are covered by unit tests (`SignatureVerificationFilterTest`) but are **not**
-> exercised in end-to-end signed-request integration tests. Full end-to-end signature testing requires a
-> provisioned `SIGNATURE_SECRET_KEY` and the production Spring profile.
+> **Note on signature coverage:** End-to-end signed-request integration coverage is provided by
+> `SignatureFlowIT`, which runs against the production Spring profile with a provisioned
+> `SIGNATURE_SECRET_KEY`. It exercises valid signature acceptance, missing-header rejection, stale
+> timestamp rejection, and replay-nonce rejection (REQ-SEC-04, REQ-SEC-05).
 
 | File                        | Tests | Domain                 |
 | --------------------------- | ----- | ---------------------- |
@@ -221,8 +220,9 @@ This document maps each major prompt requirement to the code modules that implem
 | FinanceFlowIT.java          | 5     | Finance flow           |
 | BackupRetentionIT.java      | 3     | Backup retention       |
 | ExportRestrictionIT.java    | 5     | Export restrictions    |
+| SignatureFlowIT.java        | 5     | Signature validation (end-to-end) |
 
-**Total: ~43 backend API test methods**
+**Total: ~48 backend API test methods**
 
 ### Frontend Unit Tests (23 files)
 

@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -61,6 +62,7 @@ class RegistrationFlowIT {
     @Test
     void register_unknownSession_returns404() throws Exception {
         mockMvc.perform(post("/api/registrations")
+                        .with(csrf())
                         .with(TestSecurity.user("attendee-1", "attendee", RoleType.ATTENDEE))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"sessionId\":\"test-session-id\"}"))
@@ -81,6 +83,7 @@ class RegistrationFlowIT {
         registrationRepository.save(existing);
 
         mockMvc.perform(post("/api/registrations")
+                        .with(csrf())
                         .with(TestSecurity.user("attendee-1", "attendee", RoleType.ATTENDEE))
                         .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"sessionId\":\"session-dup\"}"))
@@ -101,6 +104,7 @@ class RegistrationFlowIT {
         registrationRepository.save(existing);
 
         mockMvc.perform(post("/api/registrations")
+                        .with(csrf())
                         .with(TestSecurity.user("attendee-2", "attendee2", RoleType.ATTENDEE))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"sessionId\":\"full-session-id\"}"))

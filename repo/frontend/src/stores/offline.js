@@ -9,6 +9,7 @@ export const useOfflineStore = defineStore("offline", () => {
   );
   const pendingActions = ref([]);
   const syncInProgress = ref(false);
+  const conflictedActions = ref([]);
 
   function initListeners() {
     window.addEventListener("online", () => {
@@ -57,6 +58,11 @@ export const useOfflineStore = defineStore("offline", () => {
         await offlineQueue.removeItem(key);
       } catch (e) {
         if (e.response?.status === 409) {
+          const code = e.response?.data?.errors?.[0]?.code || "CONFLICT";
+          const message =
+            e.response?.data?.message ||
+            "Action could not be applied due to a conflict";
+          conflictedActions.value.push({ key, action, code, message });
           await offlineQueue.removeItem(key);
         }
         break;
@@ -64,6 +70,12 @@ export const useOfflineStore = defineStore("offline", () => {
     }
     await loadPendingActions();
     syncInProgress.value = false;
+  }
+
+  function dismissConflict(key) {
+    conflictedActions.value = conflictedActions.value.filter(
+      (c) => c.key !== key,
+    );
   }
 
   async function cacheRoster(sessionId, data) {
@@ -88,9 +100,11 @@ export const useOfflineStore = defineStore("offline", () => {
     isOnline,
     pendingActions,
     syncInProgress,
+    conflictedActions,
     initListeners,
     enqueuePendingAction,
     replayPendingActions,
+    dismissConflict,
     cacheRoster,
     getCachedRoster,
     loadPendingActions,

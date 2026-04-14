@@ -2,6 +2,8 @@ package com.eventops.controller.export;
 
 import com.eventops.common.dto.ApiResponse;
 import com.eventops.common.dto.export.ExportPolicyUpdateRequest;
+import com.eventops.common.dto.export.FinanceReportRequest;
+import com.eventops.common.dto.export.RosterExportRequest;
 import com.eventops.domain.audit.ExportJob;
 import com.eventops.domain.audit.WatermarkPolicy;
 import com.eventops.security.auth.EventOpsUserDetails;
@@ -12,11 +14,11 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * REST controller for managing data exports: generating roster and finance
@@ -46,13 +48,12 @@ public class ExportController {
      */
     @PostMapping("/rosters")
     public ResponseEntity<ApiResponse<ExportJob>> generateRosterExport(
-            @RequestBody Map<String, String> body,
+            @Valid @RequestBody RosterExportRequest request,
             @AuthenticationPrincipal EventOpsUserDetails principal) {
         String userId = principal.getUser().getId();
-        String sessionId = body.get("sessionId");
-        log.debug("POST /api/exports/rosters – sessionId={}, userId={}", sessionId, userId);
+        log.debug("POST /api/exports/rosters – sessionId={}, userId={}", request.getSessionId(), userId);
 
-        ExportJob job = exportService.generateRosterExport(sessionId, userId);
+        ExportJob job = exportService.generateRosterExport(request.getSessionId(), userId);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(job, "Roster export initiated"));
     }
@@ -66,13 +67,12 @@ public class ExportController {
      */
     @PostMapping("/finance-reports")
     public ResponseEntity<ApiResponse<ExportJob>> generateFinanceReport(
-            @RequestBody Map<String, String> body,
+            @Valid @RequestBody FinanceReportRequest request,
             @AuthenticationPrincipal EventOpsUserDetails principal) {
         String userId = principal.getUser().getId();
-        String periodId = body.get("periodId");
-        log.debug("POST /api/exports/finance-reports – periodId={}, userId={}", periodId, userId);
+        log.debug("POST /api/exports/finance-reports – periodId={}, userId={}", request.getPeriodId(), userId);
 
-        ExportJob job = exportService.generateFinanceReport(periodId, userId);
+        ExportJob job = exportService.generateFinanceReport(request.getPeriodId(), userId);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(job, "Finance report export initiated"));
     }

@@ -123,7 +123,7 @@ MySQL (persistence, constraints, indexes)
 ### 2.4 MySQL Persistence and Encryption Strategy
 
 **Schema Design** (to be defined in Prompt 2):
-- Flyway-managed versioned migrations under `repo/backend/database/migrations/`
+- Flyway-managed versioned migrations under `repo/backend/src/main/resources/db/migration/`
 - Foreign keys, unique constraints, and indexes enforcing business invariants
 - Sensitive fields (attendee contacts, device identifiers) encrypted at rest using AES-256 via JPA attribute converters
 - Encrypted fields stored as `VARBINARY` or `BLOB` columns

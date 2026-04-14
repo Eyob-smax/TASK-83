@@ -2,6 +2,7 @@ package com.eventops.security.config;
 
 import com.eventops.security.ratelimit.RateLimitFilter;
 import com.eventops.security.signature.SignatureVerificationFilter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +19,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -29,12 +32,19 @@ import java.util.List;
  *
  * <p>Key design decisions:</p>
  * <ul>
- *   <li><strong>CSRF disabled</strong> — the Vue.js SPA uses token-based
- *       authentication; the browser never sends implicit credentials.</li>
+ *   <li><strong>CSRF disabled (token-based)</strong> — CSRF token enforcement
+ *       is not used; instead the session cookie is configured with
+ *       {@code SameSite=Strict} (see {@code server.servlet.session.cookie}
+ *       in application.yml). Browsers never send a SameSite=Strict cookie on
+ *       cross-site requests, so CSRF attacks are structurally prevented without
+ *       requiring token round-trips in the SPA.</li>
  *   <li><strong>Session policy IF_REQUIRED</strong> — stateful sessions are
  *       appropriate for the offline local-network deployment model.</li>
- *   <li><strong>CORS wide-open for now</strong> — will be tightened in a
- *       later configuration pass (Prompt 9).</li>
+ *   <li><strong>CORS origin allowlist</strong> — driven by the
+ *       {@code eventops.cors.allowed-origins} property (overridable via the
+ *       {@code CORS_ALLOWED_ORIGINS} environment variable). Defaults to
+ *       localhost variants for development. Credentials are permitted because
+ *       origins are explicitly listed, not wildcarded.</li>
  *   <li><strong>Form login &amp; HTTP Basic disabled</strong> — authentication
  *       is handled by a dedicated REST controller.</li>
  * </ul>
@@ -43,6 +53,9 @@ import java.util.List;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
+
+    @Value("${eventops.cors.allowed-origins:http://localhost:443,http://localhost:5173,http://localhost}")
+    private List<String> corsAllowedOrigins;
 
     private final UserDetailsService userDetailsService;
     private final JsonAuthenticationEntryPoint authenticationEntryPoint;
@@ -67,8 +80,14 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // CSRF — disabled for SPA with token-based auth
-            .csrf(csrf -> csrf.disable())
+            // CSRF — cookie-based token repository; Axios reads XSRF-TOKEN cookie
+            // and sends X-XSRF-TOKEN header automatically (matches Spring defaults).
+            // CsrfTokenRequestAttributeHandler (non-XOR) is required so the raw
+            // cookie value is accepted as the expected token.
+            .csrf(csrf -> csrf
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+            )
 
             // CORS — permissive for local-network development; tightened in Prompt 9
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -150,7 +169,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedOrigins(corsAllowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

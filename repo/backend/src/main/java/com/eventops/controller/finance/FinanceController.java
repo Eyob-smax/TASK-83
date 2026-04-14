@@ -1,8 +1,10 @@
 package com.eventops.controller.finance;
 
 import com.eventops.common.dto.ApiResponse;
+import com.eventops.common.dto.finance.AccountCreateRequest;
 import com.eventops.common.dto.finance.AccountingPeriodRequest;
 import com.eventops.common.dto.finance.AllocationRuleRequest;
+import com.eventops.common.dto.finance.CostCenterCreateRequest;
 import com.eventops.common.dto.finance.PostingRequest;
 import com.eventops.domain.finance.Account;
 import com.eventops.domain.finance.AccountingPeriod;
@@ -23,7 +25,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * REST controller for financial operations: accounting periods, chart of accounts,
@@ -115,15 +116,11 @@ public class FinanceController {
      * @return 201 with the created account
      */
     @PostMapping("/accounts")
-    public ResponseEntity<ApiResponse<Account>> createAccount(@RequestBody Map<String, String> body) {
-        String accountCode = body.get("accountCode");
-        String name = body.get("name");
-        String description = body.get("description");
-        String parentId = body.get("parentId");
-        String accountType = body.get("accountType");
-        log.debug("POST /api/finance/accounts – code={}, name={}", accountCode, name);
+    public ResponseEntity<ApiResponse<Account>> createAccount(@Valid @RequestBody AccountCreateRequest request) {
+        log.debug("POST /api/finance/accounts – code={}, name={}", request.getAccountCode(), request.getName());
 
-        Account account = financeService.createAccount(accountCode, name, description, parentId, accountType);
+        Account account = financeService.createAccount(request.getAccountCode(), request.getName(),
+                request.getDescription(), request.getParentId(), request.getAccountType());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(account, "Account created"));
     }
@@ -152,14 +149,11 @@ public class FinanceController {
      * @return 201 with the created cost center
      */
     @PostMapping("/cost-centers")
-    public ResponseEntity<ApiResponse<CostCenter>> createCostCenter(@RequestBody Map<String, String> body) {
-        String code = body.get("code");
-        String name = body.get("name");
-        String description = body.get("description");
-        String centerType = body.get("centerType");
-        log.debug("POST /api/finance/cost-centers – code={}, name={}", code, name);
+    public ResponseEntity<ApiResponse<CostCenter>> createCostCenter(@Valid @RequestBody CostCenterCreateRequest request) {
+        log.debug("POST /api/finance/cost-centers – code={}, name={}", request.getCode(), request.getName());
 
-        CostCenter costCenter = financeService.createCostCenter(code, name, description, centerType);
+        CostCenter costCenter = financeService.createCostCenter(request.getCode(), request.getName(),
+                request.getDescription(), request.getCenterType());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(costCenter, "Cost center created"));
     }

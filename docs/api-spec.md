@@ -26,7 +26,7 @@ directly exposed for API testing.
 
 ### 1.3 Request Signature Format
 
-Every mutating request (POST, PUT, PATCH, DELETE) must include:
+Every authenticated request (any HTTP method, when a session is active) must include:
 
 ```
 X-Request-Signature: <Base64(HMAC-SHA256(secret, timestamp + nonce + requestBody))>
@@ -541,7 +541,7 @@ Client                              Server
   |-- Store in sessionStorage          |
 ```
 
-### 7.2 Request Signature Headers (Mutating Requests)
+### 7.2 Request Signature Headers (Authenticated Requests)
 
 ```
 X-Request-Signature: <Base64(HMAC-SHA256(secret, timestamp + nonce + body))>
@@ -556,7 +556,7 @@ Server rejects if:
 - Nonce was already seen within the TTL window (401 REPLAY_DETECTED)
 - Signature does not match computed value (401 INVALID_SIGNATURE)
 
-GET requests and `/api/auth/login`, `/api/auth/register` skip signature verification.
+Unauthenticated requests (no active session) and `/api/auth/login`, `/api/auth/register` skip signature verification. OPTIONS requests are always passed through.
 
 ### 7.3 Rate Limit Headers
 

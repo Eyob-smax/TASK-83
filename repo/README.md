@@ -107,7 +107,7 @@ docker compose up --build
 # docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 
 # 3. Access the application
-#    Frontend:   http://localhost:443
+#    Frontend:   https://localhost:443
 #    Backend API: https://localhost:8443/api
 #    MySQL:       localhost:3306  (eventops / eventops_dev)
 ```
