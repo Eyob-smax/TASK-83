@@ -141,6 +141,7 @@ class SecuritySettingsServiceTest {
 
     @Test
     void isSignatureEnabled_delegatesToSettings() {
+        when(signatureProperties.isEnabled()).thenReturn(true);
         when(repo.findById(SecuritySettings.DEFAULT_ID)).thenReturn(Optional.of(existingSettings()));
         assertFalse(service.isSignatureEnabled());
     }
