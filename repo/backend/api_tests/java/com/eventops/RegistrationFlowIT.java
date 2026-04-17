@@ -5,6 +5,7 @@ import com.eventops.domain.event.EventSession;
 import com.eventops.domain.event.SessionStatus;
 import com.eventops.domain.registration.Registration;
 import com.eventops.domain.registration.RegistrationStatus;
+import com.eventops.repository.admin.SecuritySettingsRepository;
 import com.eventops.repository.event.EventSessionRepository;
 import com.eventops.repository.registration.RegistrationRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,10 +40,14 @@ class RegistrationFlowIT {
     @Autowired
     private RegistrationRepository registrationRepository;
 
+    @Autowired
+    private SecuritySettingsRepository securitySettingsRepository;
+
     @BeforeEach
     void resetData() {
         registrationRepository.deleteAll();
         eventSessionRepository.deleteAll();
+        securitySettingsRepository.deleteAll();
     }
 
     @Test

@@ -7,6 +7,7 @@ import com.eventops.domain.user.User;
 import com.eventops.repository.admin.SecuritySettingsRepository;
 import com.eventops.repository.user.UserRepository;
 import com.eventops.security.auth.PasswordService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +37,11 @@ class AdminControllerIT {
     @BeforeEach
     void resetData() {
         userRepository.deleteAll();
+        securitySettingsRepository.deleteAll();
+    }
+
+    @AfterEach
+    void clearSecuritySettings() {
         securitySettingsRepository.deleteAll();
     }
 

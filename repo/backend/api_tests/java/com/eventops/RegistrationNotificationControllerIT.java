@@ -10,6 +10,7 @@ import com.eventops.domain.notification.Subscription;
 import com.eventops.domain.registration.Registration;
 import com.eventops.domain.registration.RegistrationStatus;
 import com.eventops.domain.user.RoleType;
+import com.eventops.repository.admin.SecuritySettingsRepository;
 import com.eventops.repository.event.EventSessionRepository;
 import com.eventops.repository.notification.DndRuleRepository;
 import com.eventops.repository.notification.SendLogRepository;
@@ -48,6 +49,7 @@ class RegistrationNotificationControllerIT {
     @Autowired private SendLogRepository sendLogRepository;
     @Autowired private SubscriptionRepository subscriptionRepository;
     @Autowired private DndRuleRepository dndRuleRepository;
+    @Autowired private SecuritySettingsRepository securitySettingsRepository;
 
     @BeforeEach
     void resetData() {
@@ -56,6 +58,7 @@ class RegistrationNotificationControllerIT {
         dndRuleRepository.deleteAll();
         registrationRepository.deleteAll();
         eventSessionRepository.deleteAll();
+        securitySettingsRepository.deleteAll();
     }
 
     // ---- Registration Tests ----
