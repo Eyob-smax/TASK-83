@@ -310,6 +310,6 @@ This platform operates entirely on a local/offline facility network:
 - `../docs/design.md` — System architecture and requirement traceability
 - `../docs/api-spec.md` — REST API specification
 - `../docs/test-traceability.md` — Requirement-to-test mapping
-- `../questions.md` — Blocker-level ambiguity log with interpretations
+- `../docs/questions.md` — Blocker-level ambiguity log with interpretations
 - `backend/src/main/resources/keystore/README.md` — TLS keystore setup
 - `.env.example` — All environment variables with documentation
