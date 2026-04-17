@@ -155,13 +155,20 @@ Total endpoints: 68.
 | GET /api/admin/security/settings                             | yes     | HTTP with mocking | AdminControllerIT, RealHttpIT                                                      | AdminControllerIT.getSecuritySettings_asSystemAdmin_returnsSettings                  |
 | PUT /api/admin/security/settings                             | yes     | HTTP with mocking | AdminControllerIT                                                                  | AdminControllerIT.updateSecuritySettings_asSystemAdmin_returnsUpdatedSettings        |
 
+Note: rows listing `RealHttpIT` include real TCP-path coverage; the `Test type` column reflects the dominant per-endpoint style across all contributing suites.
+
 ## API Test Classification
 
 ### 1. True no-mock HTTP
 
-- None (strict criteria).
-- Reason: `RealHttpIT` uses real TCP (`@SpringBootTest(webEnvironment = RANDOM_PORT)`) but introduces a test-only `SecurityFilterChain` override via `@TestConfiguration`, so execution path is altered.
-- Evidence: repo/backend/api_tests/java/com/eventops/RealHttpIT.java.
+- Present: `RealHttpIT` now satisfies strict no-mock criteria.
+- Why it now qualifies:
+  - real TCP path (`@SpringBootTest(webEnvironment = RANDOM_PORT)` + Java `HttpClient`)
+  - no `@TestConfiguration`/`SecurityFilterChain` override in the test class
+  - no `MockMvc`, no `@MockBean`, no Mockito usage
+  - request-signature flow enabled in test properties and exercised via request headers
+- Endpoints with true no-mock coverage: 32/68.
+- Evidence: `repo/backend/api_tests/java/com/eventops/RealHttpIT.java`.
 
 ### 2. HTTP with mocking
 
@@ -185,8 +192,8 @@ Total endpoints: 68.
 - Mock transport layer: `MockMvc` in API tests.
   - Where: many files under repo/backend/api_tests/java/com/eventops/\*IT.java.
 - DI/security override in Real HTTP tests.
-  - What: custom `SecurityFilterChain` bean in test config.
-  - Where: repo/backend/api_tests/java/com/eventops/RealHttpIT.java.
+  - Status: not found in current `RealHttpIT`.
+  - Where checked: `repo/backend/api_tests/java/com/eventops/RealHttpIT.java`.
 - Security context injection bypass.
   - What: `TestSecurity.user(...)` request post-processor.
   - Where: repo/backend/api_tests/java/com/eventops/TestSecurity.java; used across most MockMvc tests.
@@ -195,9 +202,9 @@ Total endpoints: 68.
 
 - Total endpoints: 68
 - Endpoints with HTTP tests: 68
-- Endpoints with TRUE no-mock tests: 0
+- Endpoints with TRUE no-mock tests: 32
 - HTTP coverage: 100.0%
-- True API coverage: 0.0%
+- True API coverage: 47.1%
 
 ## Unit Test Summary
 
@@ -205,13 +212,13 @@ Total endpoints: 68.
 
 - Present: yes.
 - Service coverage: broad (e.g., `RegistrationServiceTest`, `FinanceServiceTest`, `CheckInServiceTest`, `ImportServiceTest`, `NotificationServiceTest`, `BackupServiceTest`, `AdminServiceTest`).
-- Repository coverage: limited (3 direct repository tests found).
-  - `UserRepositoryTest`, `RegistrationRepositoryTest`, `EventSessionRepositoryTest`.
+- Repository coverage: expanded (15 direct repository tests found).
+  - Includes `UserRepositoryTest`, `RegistrationRepositoryTest`, `EventSessionRepositoryTest`, `AccountRepositoryTest`, `AllocationRuleRepositoryTest`, `AuditEventRepositoryTest`, `BackupJobRepositoryTest`, `CheckInRecordRepositoryTest`, `CostCenterRepositoryTest`, `ExportJobRepositoryTest`, `PostingJournalRepositoryTest`, `SendLogRepositoryTest`, `SubscriptionRepositoryTest`, `WatermarkPolicyRepositoryTest`, `AccountingPeriodRepositoryTest`.
 - Auth/guards/middleware coverage: present.
   - e.g., `AuthServiceTest`, `SignatureVerificationFilterTest`, `RbacTest`, `RateLimitTest`, `PermissionEvaluatorTest`.
 - Important backend modules not unit-tested directly:
   - Controllers (no controller unit tests found).
-  - Most repository interfaces (24 repositories in src; 3 direct repository tests).
+  - Remaining repository interfaces without direct tests (24 repositories in src; 15 direct repository tests).
 
 ### Frontend unit tests (strict requirement)
 
@@ -232,7 +239,7 @@ Total endpoints: 68.
 ### Cross-layer observation
 
 - Backend and frontend unit/API test presence is broad.
-- Missing real FE->BE end-to-end tests (browser/UI driving real backend over real network) remains a cross-layer gap for a fullstack project.
+- Browser-to-backend E2E tests are present (`frontend/e2e/auth-and-events.spec.js` + Playwright config/scripts), but current E2E breadth is still smoke-level.
 
 ## API Observability Check
 
@@ -252,23 +259,23 @@ Total endpoints: 68.
 
 ## Test Coverage Score (0-100)
 
-- Score: 72/100
+- Score: 91/100
 
 ## Score Rationale
 
 - - endpoint-level HTTP coverage is complete (68/68).
-- - backend and frontend unit tests are extensive.
-- - assertion depth is mostly meaningful (status/body/header checks).
-- - strict true no-mock API coverage is 0%.
-- - heavy use of MockMvc + injected principal helper reduces real-path confidence.
-- - no true FE<->BE end-to-end coverage for a fullstack system.
+- - strict true no-mock coverage now exists and is material (32/68 via `RealHttpIT`).
+- - backend unit coverage remains strong, including substantial repository test expansion.
+- - frontend browser E2E is now present (Playwright smoke path).
+- - heavy MockMvc + `TestSecurity.user(...)` usage still dominates many suites and remains a realism limiter.
+- - true no-mock coverage is not yet endpoint-complete.
 
 ## Key Gaps
 
-1. Critical: true no-mock API coverage is absent under strict criteria.
-2. High: test auth flow often bypassed with `TestSecurity.user(...)`.
-3. High: fullstack real browser-to-backend E2E suite is missing.
-4. Medium: repository-level tests cover only a small subset of repository interfaces.
+1. High: true no-mock API coverage is partial (32/68); many endpoints remain mock-only.
+2. Medium: auth-path bypass via `TestSecurity.user(...)` remains common in MockMvc suites.
+3. Medium: browser E2E exists but is smoke-level and does not yet cover role/workflow breadth.
+4. Low: repository tests are much broader now, but not yet exhaustive across all repository interfaces.
 
 ## Confidence and Assumptions
 
@@ -279,7 +286,7 @@ Total endpoints: 68.
 
 ### Test Coverage Final Verdict
 
-- PARTIAL PASS (high breadth, but fails strict true no-mock expectation).
+- PASS (strong overall coverage with remaining realism-breadth gaps).
 
 ---
 
@@ -340,12 +347,12 @@ Total endpoints: 68.
 
 ## Medium Priority Issues
 
-- README claims strong API-test realism, but strict no-mock criteria are not met in test suite design.
-  - This is a test-suite quality issue reflected by README positioning, not a hard-gate format failure.
+- None.
 
 ## Low Priority Issues
 
 - Optional dev/profile variants are documented; could be streamlined for stricter acceptance-path brevity.
+- README could explicitly call out that true no-mock HTTP coverage is currently substantial but not endpoint-complete.
 
 ## Hard Gate Failures
 
@@ -359,5 +366,5 @@ Total endpoints: 68.
 
 # Final Combined Verdicts
 
-- Test Coverage Audit: PARTIAL PASS
+- Test Coverage Audit: PASS
 - README Audit: PASS
