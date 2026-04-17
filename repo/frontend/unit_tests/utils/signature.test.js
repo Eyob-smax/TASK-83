@@ -31,4 +31,23 @@ describe('signature utilities', () => {
     const sig = await computeSignature('body', '2026-01-01T00:00:00Z', 'nonce', '')
     expect(sig).toBe('')
   })
+
+  it('computeSignature with secret returns a base64 string', async () => {
+    const sig = await computeSignature('body', '2026-01-01T00:00:00Z', 'nonce-1', 'secret')
+    expect(sig).toBeTruthy()
+    expect(sig).toMatch(/^[A-Za-z0-9+/=]+$/)
+    expect(sig.length).toBeGreaterThan(20)
+  })
+
+  it('computeSignature is deterministic for same inputs', async () => {
+    const a = await computeSignature('body', '2026-01-01T00:00:00Z', 'n1', 'secret')
+    const b = await computeSignature('body', '2026-01-01T00:00:00Z', 'n1', 'secret')
+    expect(a).toBe(b)
+  })
+
+  it('computeSignature changes when the body changes', async () => {
+    const a = await computeSignature('body1', '2026-01-01T00:00:00Z', 'n1', 'secret')
+    const b = await computeSignature('body2', '2026-01-01T00:00:00Z', 'n1', 'secret')
+    expect(a).not.toBe(b)
+  })
 })

@@ -8,7 +8,7 @@ vi.mock('../../src/api/events.js', () => ({
   getAvailability: vi.fn()
 }))
 
-import { listEvents, getEvent } from '../../src/api/events.js'
+import { listEvents, getEvent, getAvailability } from '../../src/api/events.js'
 
 describe('events store', () => {
   beforeEach(() => {
@@ -45,5 +45,25 @@ describe('events store', () => {
     const store = useEventsStore()
     await store.fetchEvent('1')
     expect(store.currentEvent.title).toBe('Session A')
+  })
+
+  it('fetchEvent sets error on failure', async () => {
+    getEvent.mockRejectedValue({ response: { data: { message: 'not found' } } })
+    const store = useEventsStore()
+    await store.fetchEvent('x')
+    expect(store.error).toBe('not found')
+  })
+
+  it('fetchAvailability updates currentEvent without affecting loading', async () => {
+    getAvailability.mockResolvedValue({ data: { data: { id: '1', remainingSeats: 2 } } })
+    const store = useEventsStore()
+    await store.fetchAvailability('1')
+    expect(store.currentEvent.remainingSeats).toBe(2)
+  })
+
+  it('fetchAvailability swallows errors silently', async () => {
+    getAvailability.mockRejectedValue(new Error('boom'))
+    const store = useEventsStore()
+    await expect(store.fetchAvailability('1')).resolves.toBeUndefined()
   })
 })

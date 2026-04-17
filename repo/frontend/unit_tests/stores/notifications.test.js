@@ -55,4 +55,48 @@ describe('notifications store', () => {
     await store.fetchDndSettings()
     expect(store.dndSettings.startTime).toBe('21:00')
   })
+
+  it('fetchNotifications sets error on failure', async () => {
+    notifApi.listNotifications.mockRejectedValue({ response: { data: { message: 'boom' } } })
+    const store = useNotificationsStore()
+    await store.fetchNotifications()
+    expect(store.error).toBe('boom')
+  })
+
+  it('fetchSubscriptions populates subscriptions', async () => {
+    notifApi.getSubscriptions.mockResolvedValue({ data: { data: [{ type: 'A', enabled: true }] } })
+    const store = useNotificationsStore()
+    await store.fetchSubscriptions()
+    expect(store.subscriptions).toHaveLength(1)
+  })
+
+  it('updateSubscriptions updates state on success', async () => {
+    notifApi.updateSubscriptions.mockResolvedValue({})
+    const store = useNotificationsStore()
+    await store.updateSubscriptions([{ type: 'A', enabled: false }])
+    expect(store.subscriptions).toHaveLength(1)
+  })
+
+  it('updateDnd updates state on success', async () => {
+    notifApi.updateDndSettings.mockResolvedValue({ data: { data: { enabled: true, startTime: '22:00', endTime: '06:00' } } })
+    const store = useNotificationsStore()
+    await store.updateDnd({ enabled: true, startTime: '22:00', endTime: '06:00' })
+    expect(store.dndSettings.startTime).toBe('22:00')
+  })
+
+  it('markAsRead does not decrement past zero', async () => {
+    notifApi.markAsRead.mockResolvedValue({})
+    const store = useNotificationsStore()
+    store.unreadCount = 0
+    store.notifications = [{ id: 'n1', read: false }]
+    await store.markAsRead('n1')
+    expect(store.unreadCount).toBe(0)
+  })
+
+  it('markAsRead sets error on API failure', async () => {
+    notifApi.markAsRead.mockRejectedValue({ response: { data: { message: 'fail' } } })
+    const store = useNotificationsStore()
+    await store.markAsRead('n1')
+    expect(store.error).toBe('fail')
+  })
 })

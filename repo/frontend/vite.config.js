@@ -30,7 +30,13 @@ export default defineConfig({
       reportsDirectory: './coverage',
       include: ['src/**/*.{js,vue}'],
       exclude: ['src/main.js'],
-      reporter: ['text', 'html', 'lcov']
+      reporter: ['text', 'html', 'lcov'],
+      thresholds: {
+        lines: 90,
+        branches: 75,
+        functions: 75,
+        statements: 90
+      }
     }
   }
 })

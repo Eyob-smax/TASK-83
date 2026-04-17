@@ -5,7 +5,9 @@ import com.eventops.domain.user.RoleType;
 import com.eventops.domain.user.User;
 import com.eventops.security.auth.EventOpsUserDetails;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 public final class TestSecurity {
@@ -25,6 +27,16 @@ public final class TestSecurity {
         EventOpsUserDetails principal = new EventOpsUserDetails(user);
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
-        return SecurityMockMvcRequestPostProcessors.authentication(authentication);
+        return request -> {
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+            request.setUserPrincipal(authentication);
+            request.getSession(true).setAttribute(
+                    HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                    context
+            );
+            return request;
+        };
     }
 }

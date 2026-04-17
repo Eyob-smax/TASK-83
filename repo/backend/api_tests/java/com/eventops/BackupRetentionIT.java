@@ -38,6 +38,8 @@ class BackupRetentionIT {
     void attendee_cannotAccessBackupAdminEndpoints() throws Exception {
         mockMvc.perform(get("/api/admin/backups")
                         .with(TestSecurity.user("attendee-1", "attendee", RoleType.ATTENDEE)))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").exists());
     }
 }

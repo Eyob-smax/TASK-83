@@ -1,0 +1,48 @@
+# =============================================================================
+# EventOps Platform — Docker Test Runner
+#
+# Runs all test suites inside containers, no host tooling required.
+#
+# Usage:
+#   docker compose -f docker-compose.test.yml run --rm frontend-test
+#   docker compose -f docker-compose.test.yml run --rm backend-unit-test
+#   docker compose -f docker-compose.test.yml run --rm backend-api-test
+# =============================================================================
+
+services:
+  frontend-test:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - frontend-node-modules:/app/node_modules
+    command: sh -c "npm ci --ignore-scripts 2>/dev/null && npx vitest run --coverage"
+    environment:
+      CI: "true"
+
+  backend-unit-test:
+    image: maven:3.9-eclipse-temurin-17
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+      - backend-m2:/root/.m2
+    command: mvn test -pl . -Dtest="*Test,*Tests"
+    environment:
+      SPRING_PROFILES_ACTIVE: test
+
+  backend-api-test:
+    image: maven:3.9-eclipse-temurin-17
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+      - backend-m2:/root/.m2
+    command: >
+      mvn verify -pl .
+      -Dtest=NoSuchTestWillMatch -Dsurefire.failIfNoSpecifiedTests=false
+      -Dit.test="*IT,*IntegrationTest" -DfailIfNoTests=false
+    environment:
+      SPRING_PROFILES_ACTIVE: test
+
+volumes:
+  frontend-node-modules:
+  backend-m2:

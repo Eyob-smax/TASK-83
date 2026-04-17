@@ -1,5 +1,7 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
+import { setActivePinia, createPinia } from "pinia";
 import router from "../../src/router/index.js";
+import { useAuthStore } from "../../src/stores/auth.js";
 
 describe("router guard metadata", () => {
   it("login route is explicitly public", () => {
@@ -49,5 +51,51 @@ describe("router guard metadata", () => {
       "FINANCE_MANAGER",
       "SYSTEM_ADMIN",
     ]);
+  });
+});
+
+describe("router navigation guard behavior", () => {
+  beforeEach(() => {
+    sessionStorage.clear();
+    setActivePinia(createPinia());
+  });
+
+  it("redirects unauthenticated users to /login", async () => {
+    await router.push("/finance");
+    await router.isReady();
+    // After guard runs, current route must be /login
+    expect(router.currentRoute.value.path).toBe("/login");
+    expect(router.currentRoute.value.query.redirect).toBe("/finance");
+  });
+
+  it("allows authenticated user with matching role", async () => {
+    sessionStorage.setItem(
+      "eventops_user",
+      JSON.stringify({ id: "u1", roleType: "FINANCE_MANAGER" })
+    );
+    const auth = useAuthStore();
+    auth.initFromSession();
+    await router.push("/finance");
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe("/finance");
+  });
+
+  it("redirects authenticated user without role to / with forbidden=true", async () => {
+    sessionStorage.setItem(
+      "eventops_user",
+      JSON.stringify({ id: "u1", roleType: "ATTENDEE" })
+    );
+    const auth = useAuthStore();
+    auth.initFromSession();
+    await router.push("/admin/audit");
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe("/");
+    expect(router.currentRoute.value.query.forbidden).toBe("true");
+  });
+
+  it("allows unauthenticated access to /login (requiresAuth: false)", async () => {
+    await router.push("/login");
+    await router.isReady();
+    expect(router.currentRoute.value.path).toBe("/login");
   });
 });

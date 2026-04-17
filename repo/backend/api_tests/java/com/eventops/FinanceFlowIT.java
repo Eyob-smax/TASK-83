@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -21,14 +22,16 @@ class FinanceFlowIT {
     void financeManager_canAccessFinanceAccounts() throws Exception {
         mockMvc.perform(get("/api/finance/accounts")
                         .with(TestSecurity.user("finance-1", "finance", RoleType.FINANCE_MANAGER)))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
     }
 
     @Test
     void admin_canAccessFinanceAccounts() throws Exception {
         mockMvc.perform(get("/api/finance/accounts")
                         .with(TestSecurity.user("admin-1", "admin", RoleType.SYSTEM_ADMIN)))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
     }
 
     @Test

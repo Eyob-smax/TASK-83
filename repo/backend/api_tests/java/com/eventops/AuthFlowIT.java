@@ -78,4 +78,47 @@ class AuthFlowIT {
         mockMvc.perform(post("/api/auth/refresh").with(csrf()))
                 .andExpect(status().isUnauthorized());
     }
+
+    @Test
+    void register_withDuplicateUsername_returns409() throws Exception {
+        mockMvc.perform(post("/api/auth/register")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"duplicate-user\",\"password\":\"password123\",\"displayName\":\"Duplicate User\"}"))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/auth/register")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"duplicate-user\",\"password\":\"password123\",\"displayName\":\"Duplicate User\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.errors[0].code").value("USERNAME_TAKEN"));
+    }
+
+    @Test
+    void logout_withActiveSession_returns200() throws Exception {
+        String username = "logout-user";
+
+        mockMvc.perform(post("/api/auth/register")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"" + username + "\",\"password\":\"password123\",\"displayName\":\"Logout User\"}"))
+                .andExpect(status().isCreated());
+
+        MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"" + username + "\",\"password\":\"password123\"}"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        MockHttpSession session = (MockHttpSession) loginResult.getRequest().getSession(false);
+
+        mockMvc.perform(post("/api/auth/logout")
+                        .with(csrf())
+                        .session(session))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Logout successful"));
+    }
 }

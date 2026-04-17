@@ -35,4 +35,31 @@ class RevenueRecognizerTest {
         assertEquals(posting, period.startDate());
         assertEquals(posting, period.endDate());
     }
+
+    @Test
+    void overSessionDates_usesStartOnly_whenEndIsNull() {
+        LocalDate posting = LocalDate.of(2026, 4, 1);
+        LocalDate sessionStart = LocalDate.of(2026, 4, 10);
+        var period = recognizer.computePeriod(RevenueRecognitionMethod.OVER_SESSION_DATES, posting, sessionStart, null);
+        assertEquals(sessionStart, period.startDate());
+        assertEquals(posting, period.endDate());
+    }
+
+    @Test
+    void overSessionDates_usesEndOnly_whenStartIsNull() {
+        LocalDate posting = LocalDate.of(2026, 4, 1);
+        LocalDate sessionEnd = LocalDate.of(2026, 4, 12);
+        var period = recognizer.computePeriod(RevenueRecognitionMethod.OVER_SESSION_DATES, posting, null, sessionEnd);
+        assertEquals(posting, period.startDate());
+        assertEquals(sessionEnd, period.endDate());
+    }
+
+    @Test
+    void recognitionPeriod_record_equalityAndGetters() {
+        var a = new RevenueRecognizer.RecognitionPeriod(LocalDate.of(2026, 4, 1), LocalDate.of(2026, 4, 2));
+        var b = new RevenueRecognizer.RecognitionPeriod(LocalDate.of(2026, 4, 1), LocalDate.of(2026, 4, 2));
+        assertEquals(a, b);
+        assertEquals(LocalDate.of(2026, 4, 1), a.startDate());
+        assertEquals(LocalDate.of(2026, 4, 2), a.endDate());
+    }
 }

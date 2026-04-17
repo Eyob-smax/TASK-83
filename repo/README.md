@@ -1,5 +1,7 @@
 # EventOps — Compliance-Grade Event Operations and Accounting Platform
 
+**Project type:** fullstack
+
 ## Overview
 
 EventOps is a full-stack offline facility-network platform for managing internal trainings, certification sessions, and community events. It runs entirely within a local network with **zero dependency on external services** — no SaaS providers, no email/SMS, no maps, no third-party identity providers.
@@ -89,8 +91,7 @@ The nginx frontend proxies all `/api/*` requests to the backend over HTTPS
 
 ### Prerequisites
 
-- Docker and Docker Compose (for containerized startup)
-- OR: Node.js 20+, Java 17+, Maven 3.9+, MySQL 8.x (for local development)
+- Docker and Docker Compose
 
 ### Containerized Startup (recommended)
 
@@ -101,7 +102,8 @@ cp .env.example .env
 # The secure default path requires a real ENCRYPTION_SECRET_KEY.
 
 # 2. Build and start the secure default stack
-docker compose up --build
+docker compose up --build          # Docker Compose V2
+# docker-compose up --build        # Docker Compose V1
 
 # Optional: local relaxed dev stack (dev profile, signature verification off)
 # docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
@@ -120,18 +122,75 @@ docker compose down
 docker compose down -v
 ```
 
-### Local Development (without Docker)
+## Demo Credentials
+
+After `docker compose up --build`, run the automated provisioning script to create
+demo accounts for all four roles:
 
 ```bash
-# Backend
-cd backend
-mvn spring-boot:run -Dspring-boot.run.profiles=dev
-
-# Frontend (separate terminal)
-cd frontend
-npm install
-npm run dev   # Vite dev server at http://localhost:5173
+./seed-demo-users.sh
 ```
+
+This registers four users via the API and promotes three to their target roles
+inside the MySQL container. No manual steps required.
+
+| Username    | Password      | Role             |
+| ----------- | ------------- | ---------------- |
+| `admin`     | `admin123`    | SYSTEM_ADMIN     |
+| `staff`     | `staff123`    | EVENT_STAFF      |
+| `finance`   | `finance123`  | FINANCE_MANAGER  |
+| `attendee`  | `attendee123` | ATTENDEE         |
+
+## Verification
+
+After starting with `docker compose up --build`, verify the system is operational:
+
+```bash
+# 1. Register a user
+curl -k -X POST https://localhost:8443/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"demo","password":"password123","displayName":"Demo User"}'
+# Expected: HTTP 201
+# Body: {"success":true,"data":{"username":"demo","roleType":"ATTENDEE",...}}
+
+# 2. Login (save session cookie)
+curl -k -c cookies.txt -X POST https://localhost:8443/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"demo","password":"password123"}'
+# Expected: HTTP 200
+# Body: {"success":true,"message":"Login successful","data":{"username":"demo",...}}
+
+# 3. Get current user profile
+curl -k -b cookies.txt https://localhost:8443/api/auth/me
+# Expected: HTTP 200
+# Body: {"success":true,"data":{"username":"demo","roleType":"ATTENDEE",...}}
+
+# 4. List event sessions
+curl -k -b cookies.txt https://localhost:8443/api/events
+# Expected: HTTP 200
+# Body: {"success":true,"data":{"content":[],"totalElements":0,...}}
+
+# 5. Attempt registration for a non-existent session (validates error handling)
+curl -k -b cookies.txt -X POST https://localhost:8443/api/registrations \
+  -H "Content-Type: application/json" \
+  -d '{"sessionId":"non-existent-session"}'
+# Expected: HTTP 404
+# Body: {"success":false,"errors":[{"code":"NOT_FOUND",...}]}
+```
+
+### Web UI Verification
+
+Open a browser and confirm the frontend application is accessible:
+
+1. Navigate to `https://localhost` (accept the self-signed certificate warning).
+2. **Login page** loads — you see "Sign In" heading with username and password fields.
+3. Enter demo credentials (`admin` / `admin123`) and click **Sign In**.
+4. **Dashboard** loads — you see "Event Sessions" heading and the sidebar navigation.
+5. **Sidebar** shows all navigation items for SYSTEM_ADMIN: Sessions, My Waitlist, Notifications, Check-In, Imports, Finance, Exports, Audit Log, Users, Backups, Security.
+6. Click **Finance** in the sidebar — "Finance Dashboard" page loads with Accounting Periods table.
+7. Click **Audit Log** in the sidebar — "Audit Log" page loads with filter bar and search button.
+8. Click **Users** in the sidebar — "User Management" page loads with the users table showing the demo accounts.
+9. Click the username in the header and select **Logout** — redirected back to the login page.
 
 ## HTTPS / TLS Configuration
 
@@ -158,9 +217,6 @@ use server-issued per-session signature tokens for browser clients.
 The backend `SIGNATURE_SECRET_KEY` remains an optional fallback for
 non-session clients.
 
-> **Note**: Docker and tests have not been executed yet. The repository is
-> statically complete and ready for execution after provisioning the
-> `ENCRYPTION_SECRET_KEY` credential.
 
 ## Configuration Reference
 
@@ -188,23 +244,29 @@ to `.env` for a full documented reference. Key variables:
 ## Running Tests
 
 ```bash
-./run_tests.sh                  # All test suites
-./run_tests.sh frontend         # Frontend unit tests only
-./run_tests.sh backend          # Backend unit + API tests
-./run_tests.sh backend-unit     # Backend unit tests only
-./run_tests.sh backend-api      # Backend API/integration tests only
-./run_tests.sh --coverage       # All suites with coverage reports
+# Docker-contained (no host tooling required)
+./run_tests.sh --docker
 ```
 
-**Prerequisites**: Node.js 20+, Java 17+, Maven 3.9+, MySQL 8.x (for API tests)
+> **Note**: If using Docker Compose V1, replace `docker compose` with
+> `docker-compose` in commands above and in `run_tests.sh`.
 
 ### Test Suite Summary
 
-| Suite         | Location               | Runner                   | Tests                    |
-| ------------- | ---------------------- | ------------------------ | ------------------------ |
-| Backend unit  | `backend/unit_tests/`  | JUnit 5 / Maven Surefire | ~195 methods in 34 files |
-| Backend API   | `backend/api_tests/`   | JUnit 5 / Maven Failsafe | ~43 methods in 9 files   |
-| Frontend unit | `frontend/unit_tests/` | Vitest                   | ~129 methods in 23 files |
+| Suite              | Location               | Runner                   | Tests    |
+| ------------------ | ---------------------- | ------------------------ | -------- |
+| Backend unit       | `backend/unit_tests/`  | JUnit 5 / Maven Surefire | ~384     |
+| Backend API/IT     | `backend/api_tests/`   | JUnit 5 / Maven Failsafe | ~130     |
+| Backend true HTTP  | `RealHttpIT.java`      | Java HttpClient + RANDOM_PORT | ~24 |
+| Frontend unit      | `frontend/unit_tests/` | Vitest                   | ~426     |
+| E2E smoke          | `run_tests.sh smoke`   | curl                     | 4        |
+
+All backend API tests use **real services with security filters enabled** (no `@MockBean`, no `addFilters=false`).
+
+> **Transport distinction**: MockMvc-based IT tests simulate servlet transport
+> without real TCP sockets. `RealHttpIT` uses `@SpringBootTest(RANDOM_PORT)`
+> with Java `HttpClient` for true socket-level HTTP over TCP. Both categories
+> use real services with no `@MockBean`.
 
 **Coverage tools**: JaCoCo (backend), V8 via Vitest (frontend). Reports
 generated with `--coverage` flag.
@@ -247,3 +309,4 @@ This platform operates entirely on a local/offline facility network:
 - `../questions.md` — Blocker-level ambiguity log with interpretations
 - `backend/src/main/resources/keystore/README.md` — TLS keystore setup
 - `.env.example` — All environment variables with documentation
+

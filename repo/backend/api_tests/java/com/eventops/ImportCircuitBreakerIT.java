@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -21,7 +22,8 @@ class ImportCircuitBreakerIT {
     void listSources_staffCanAccess() throws Exception {
         mockMvc.perform(get("/api/imports/sources")
                         .with(TestSecurity.user("staff-1", "staff", RoleType.EVENT_STAFF)))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
     }
 
     @Test
@@ -42,6 +44,7 @@ class ImportCircuitBreakerIT {
     void circuitBreakerStatus_adminCanAccess() throws Exception {
         mockMvc.perform(get("/api/imports/circuit-breaker")
                         .with(TestSecurity.user("admin-1", "admin", RoleType.SYSTEM_ADMIN)))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
     }
 }
