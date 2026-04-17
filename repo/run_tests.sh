@@ -8,19 +8,21 @@
 #   - Backend API tests:      repo/backend/api_tests/    (JUnit 5 via Maven Failsafe)
 #
 # Usage:
-#   ./run_tests.sh                  # Run all suites in Docker (default)
-#   ./run_tests.sh --host           # Run all suites using host tooling
-#   ./run_tests.sh --host frontend  # Frontend tests only (host mode)
-#   ./run_tests.sh --host backend   # Backend unit + API tests (host mode)
-#   ./run_tests.sh --host smoke     # E2E smoke tests (starts real backend)
-#   ./run_tests.sh --host --coverage # All suites with coverage reports
+#   ./run_tests.sh                  # Run all suites
+#   ./run_tests.sh frontend         # Frontend tests only
+#   ./run_tests.sh backend          # Backend unit + API tests
+#   ./run_tests.sh backend-unit     # Backend unit tests only
+#   ./run_tests.sh backend-api      # Backend API tests only
+#   ./run_tests.sh smoke            # E2E smoke tests (starts real backend)
+#   ./run_tests.sh --coverage       # Run all with coverage reports
+#   ./run_tests.sh --docker         # Run all suites inside Docker containers
 #
-# Prerequisites (default Docker mode):
-#   - Docker and Docker Compose
-# Prerequisites (--host mode):
+# Prerequisites (host mode):
 #   - Node.js 20+, npm (for frontend)
 #   - Java 17+, Maven 3.9+ (for backend)
-#   - No external DB required (H2 in-memory for tests)
+#   - No external DB required by default test profile (H2 in-memory)
+# Prerequisites (--docker mode):
+#   - Docker and Docker Compose
 # =============================================================================
 
 set -euo pipefail
@@ -35,17 +37,9 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-# Parse SUITE from first non-flag argument
-SUITE="all"
+SUITE="${1:-all}"
 COVERAGE=false
-HOST_MODE=false
-
-for arg in "$@"; do
-  case "$arg" in
-    --*) ;; # skip flags in suite detection
-    *) SUITE="$arg"; break ;;
-  esac
-done
+DOCKER=false
 EXIT_CODE=0
 FRONTEND_RESULT="skipped"
 BACKEND_UNIT_RESULT="skipped"
@@ -57,12 +51,8 @@ for arg in "$@"; do
   if [ "$arg" = "--coverage" ]; then
     COVERAGE=true
   fi
-  if [ "$arg" = "--host" ]; then
-    HOST_MODE=true
-  fi
-  # Legacy: --docker is still accepted (no-op since Docker is now default)
   if [ "$arg" = "--docker" ]; then
-    true
+    DOCKER=true
   fi
 done
 
@@ -112,33 +102,33 @@ run_backend_unit_tests() {
   cd "$SCRIPT_DIR"
 }
 
-# run_backend_api_tests() {
-#   echo -e "${YELLOW}=== Backend API/Integration Tests (JUnit 5 / Failsafe) ===${NC}"
-#   echo "  Source: $BACKEND_DIR/api_tests/"
-#   echo "  Config: $BACKEND_DIR/pom.xml (maven-failsafe-plugin)"
-#   echo "  Note: Uses application-test profile (H2 in-memory) by default"
-#   echo ""
+run_backend_api_tests() {
+  echo -e "${YELLOW}=== Backend API/Integration Tests (JUnit 5 / Failsafe) ===${NC}"
+  echo "  Source: $BACKEND_DIR/api_tests/"
+  echo "  Config: $BACKEND_DIR/pom.xml (maven-failsafe-plugin)"
+  echo "  Note: Uses application-test profile (H2 in-memory) by default"
+  echo ""
 
-#   if [ ! -f "$BACKEND_DIR/pom.xml" ]; then
-#     echo -e "${RED}Backend pom.xml not found at $BACKEND_DIR${NC}"
-#     BACKEND_API_RESULT="failed"
-#     EXIT_CODE=1
-#     return
-#   fi
+  if [ ! -f "$BACKEND_DIR/pom.xml" ]; then
+    echo -e "${RED}Backend pom.xml not found at $BACKEND_DIR${NC}"
+    BACKEND_API_RESULT="failed"
+    EXIT_CODE=1
+    return
+  fi
 
-#   cd "$BACKEND_DIR"
-#   if [ "$COVERAGE" = true ]; then
-#     mvn verify -pl . -Dtest=NoUnitTests -Dsurefire.failIfNoSpecifiedTests=false \
-#       -Dit.test="*IT,*IntegrationTest" -DfailIfNoTests=false 2>&1 \
-#       && BACKEND_API_RESULT="passed" || { BACKEND_API_RESULT="failed"; EXIT_CODE=1; }
-#   else
-#     # Use the lifecycle so JaCoCo prepare-agent-integration populates failsafeArgLine.
-#     mvn verify -pl . -Dtest=NoUnitTests -Dsurefire.failIfNoSpecifiedTests=false \
-#       -Dit.test="*IT,*IntegrationTest" -DfailIfNoTests=false 2>&1 \
-#       && BACKEND_API_RESULT="passed" || { BACKEND_API_RESULT="failed"; EXIT_CODE=1; }
-#   fi
-#   cd "$SCRIPT_DIR"
-# }
+  cd "$BACKEND_DIR"
+  if [ "$COVERAGE" = true ]; then
+    mvn verify -pl . -Dtest=NoUnitTests -Dsurefire.failIfNoSpecifiedTests=false \
+      -Dit.test="*IT,*IntegrationTest" -DfailIfNoTests=false 2>&1 \
+      && BACKEND_API_RESULT="passed" || { BACKEND_API_RESULT="failed"; EXIT_CODE=1; }
+  else
+    # Use the lifecycle so JaCoCo prepare-agent-integration populates failsafeArgLine.
+    mvn verify -pl . -Dtest=NoUnitTests -Dsurefire.failIfNoSpecifiedTests=false \
+      -Dit.test="*IT,*IntegrationTest" -DfailIfNoTests=false 2>&1 \
+      && BACKEND_API_RESULT="passed" || { BACKEND_API_RESULT="failed"; EXIT_CODE=1; }
+  fi
+  cd "$SCRIPT_DIR"
+}
 
 run_docker_tests() {
   echo -e "${YELLOW}=== Running Tests in Docker ===${NC}"
@@ -274,38 +264,36 @@ print_summary() {
 }
 
 # --- Main ---
-if [ "$HOST_MODE" = true ]; then
-  # Host-local execution (requires Node.js, Java, Maven on host)
+if [ "$DOCKER" = true ]; then
+  run_docker_tests
+else
   case "$SUITE" in
     frontend)
       run_frontend_tests
       ;;
     backend)
       run_backend_unit_tests
-      # run_backend_api_tests
+      run_backend_api_tests
       ;;
     backend-unit)
       run_backend_unit_tests
       ;;
     backend-api)
-      # run_backend_api_tests
+      run_backend_api_tests
       ;;
     smoke)
-      # run_smoke_tests
+      run_smoke_tests
       ;;
     all|--coverage)
       run_frontend_tests
       run_backend_unit_tests
-      # run_backend_api_tests
+      run_backend_api_tests
       ;;
     *)
-      echo "Usage: $0 {all|frontend|backend|backend-unit|backend-api|smoke} [--host] [--coverage]"
+      echo "Usage: $0 {all|frontend|backend|backend-unit|backend-api|smoke} [--coverage] [--docker]"
       exit 1
       ;;
   esac
-else
-  # Default: Docker-contained execution (no host tooling required)
-  run_docker_tests
 fi
 
 print_summary
