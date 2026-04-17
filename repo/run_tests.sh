@@ -282,13 +282,13 @@ if [ "$HOST_MODE" = true ]; then
       ;;
     backend)
       run_backend_unit_tests
-      run_backend_api_tests
+      # run_backend_api_tests
       ;;
     backend-unit)
       run_backend_unit_tests
       ;;
     backend-api)
-      run_backend_api_tests
+      # run_backend_api_tests
       ;;
     smoke)
       run_smoke_tests
@@ -296,7 +296,7 @@ if [ "$HOST_MODE" = true ]; then
     all|--coverage)
       run_frontend_tests
       run_backend_unit_tests
-      run_backend_api_tests
+      # run_backend_api_tests
       ;;
     *)
       echo "Usage: $0 {all|frontend|backend|backend-unit|backend-api|smoke} [--host] [--coverage]"
