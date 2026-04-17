@@ -134,12 +134,12 @@ demo accounts for all four roles:
 This registers four users via the API and promotes three to their target roles
 inside the MySQL container. No manual steps required.
 
-| Username    | Password      | Role             |
-| ----------- | ------------- | ---------------- |
-| `admin`     | `admin123`    | SYSTEM_ADMIN     |
-| `staff`     | `staff123`    | EVENT_STAFF      |
-| `finance`   | `finance123`  | FINANCE_MANAGER  |
-| `attendee`  | `attendee123` | ATTENDEE         |
+| Username   | Password      | Role            |
+| ---------- | ------------- | --------------- |
+| `admin`    | `admin123`    | SYSTEM_ADMIN    |
+| `staff`    | `staff123`    | EVENT_STAFF     |
+| `finance`  | `finance123`  | FINANCE_MANAGER |
+| `attendee` | `attendee123` | ATTENDEE        |
 
 ## Verification
 
@@ -217,7 +217,6 @@ use server-issued per-session signature tokens for browser clients.
 The backend `SIGNATURE_SECRET_KEY` remains an optional fallback for
 non-session clients.
 
-
 ## Configuration Reference
 
 All configuration is externalized as environment variables. Copy `.env.example`
@@ -246,6 +245,10 @@ to `.env` for a full documented reference. Key variables:
 ```bash
 # Docker-contained (no host tooling required)
 ./run_tests.sh --docker
+
+# Browser-to-backend E2E (requires backend running on https://localhost:8443)
+cd frontend
+npm run test:e2e
 ```
 
 > **Note**: If using Docker Compose V1, replace `docker compose` with
@@ -253,13 +256,14 @@ to `.env` for a full documented reference. Key variables:
 
 ### Test Suite Summary
 
-| Suite              | Location               | Runner                   | Tests    |
-| ------------------ | ---------------------- | ------------------------ | -------- |
-| Backend unit       | `backend/unit_tests/`  | JUnit 5 / Maven Surefire | ~384     |
-| Backend API/IT     | `backend/api_tests/`   | JUnit 5 / Maven Failsafe | ~130     |
-| Backend true HTTP  | `RealHttpIT.java`      | Java HttpClient + RANDOM_PORT | ~24 |
-| Frontend unit      | `frontend/unit_tests/` | Vitest                   | ~426     |
-| E2E smoke          | `run_tests.sh smoke`   | curl                     | 4        |
+| Suite                | Location               | Runner                        | Tests      |
+| -------------------- | ---------------------- | ----------------------------- | ---------- |
+| Backend unit         | `backend/unit_tests/`  | JUnit 5 / Maven Surefire      | ~384       |
+| Backend API/IT       | `backend/api_tests/`   | JUnit 5 / Maven Failsafe      | ~130       |
+| Backend true HTTP    | `RealHttpIT.java`      | Java HttpClient + RANDOM_PORT | ~24        |
+| Frontend unit        | `frontend/unit_tests/` | Vitest                        | ~426       |
+| Frontend browser E2E | `frontend/e2e/`        | Playwright (Chromium)         | smoke flow |
+| E2E smoke            | `run_tests.sh smoke`   | curl                          | 4          |
 
 All backend API tests use **real services with security filters enabled** (no `@MockBean`, no `addFilters=false`).
 
@@ -309,4 +313,3 @@ This platform operates entirely on a local/offline facility network:
 - `../questions.md` — Blocker-level ambiguity log with interpretations
 - `backend/src/main/resources/keystore/README.md` — TLS keystore setup
 - `.env.example` — All environment variables with documentation
-

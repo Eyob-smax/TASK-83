@@ -9,6 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
     "lint": "eslint . --ext .vue,.js,.cjs"
   },
   "dependencies": {
@@ -26,6 +28,7 @@
     "@vue/test-utils": "^2.4.6",
     "jsdom": "^25.0.1",
     "eslint": "^9.17.0",
-    "eslint-plugin-vue": "^9.32.0"
+    "eslint-plugin-vue": "^9.32.0",
+    "@playwright/test": "^1.54.2"
   }
 }

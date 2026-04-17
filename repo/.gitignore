@@ -29,6 +29,9 @@ backend/.mvn/wrapper/maven-wrapper.jar
 frontend/node_modules/
 frontend/dist/
 frontend/coverage/
+frontend/playwright-report/
+frontend/test-results/
+frontend/.playwright/
 
 # ---------------------------------------------------------------------------
 # Java / IDE artifacts
