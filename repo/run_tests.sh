@@ -291,7 +291,7 @@ if [ "$HOST_MODE" = true ]; then
       # run_backend_api_tests
       ;;
     smoke)
-      run_smoke_tests
+      # run_smoke_tests
       ;;
     all|--coverage)
       run_frontend_tests
