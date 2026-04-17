@@ -99,6 +99,9 @@ public class SecuritySettingsService {
     }
 
     public boolean isSignatureEnabled() {
+        if (!signatureProperties.isEnabled()) {
+            return false;
+        }
         return getEffectiveSettings().isSignatureEnabled();
     }
 
